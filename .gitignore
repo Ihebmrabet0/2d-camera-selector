@@ -1,0 +1,10 @@
+# Backups
+data/cameras.json.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

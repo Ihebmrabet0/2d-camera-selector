@@ -1,0 +1,178 @@
+﻿{
+  "cameras": [
+    {
+      "id": "MM-2D-S1",
+      "name": "2D S1",
+      "sensor": {
+        "sizeName": "1/2.5\"",
+        "pixelH": 2592,
+        "pixelV": 1944,
+        "pixelSizeUm": 2.2,
+        "ccdWidthMm": 5.70,
+        "ccdHeightMm": 4.28
+      },
+      "availableLensesMm": [6, 8, 12, 16, 25, 35, 50],
+      "availableAperturesF": [1.8, 2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.011,
+      "overview": [
+        "Compact 5 MP industrial camera",
+        "Global shutter",
+        "Ideal for inspection of small parts"
+      ],
+      "specs": {
+        "Resolution": "2592 x 1944 (5 MP)",
+        "Sensor": "1/2.5\" CMOS",
+        "Pixel size": "2.2 um",
+        "Typical capture time (s)": "0.02 - 0.04",
+        "Dimensions (mm)": "29 x 29 x 42",
+        "Weight (kg)": "0.09"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "MM-2D-M1",
+      "name": "2D M1",
+      "sensor": {
+        "sizeName": "1/1.8\"",
+        "pixelH": 1624,
+        "pixelV": 1228,
+        "pixelSizeUm": 4.4,
+        "ccdWidthMm": 7.15,
+        "ccdHeightMm": 5.44
+      },
+      "availableLensesMm": [6, 8, 8.5, 9, 12, 16, 25, 35, 50, 75],
+      "availableAperturesF": [1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.020,
+      "overview": [
+        "2 MP industrial workhorse",
+        "Large 4.4 um pixels for low light",
+        "General purpose machine vision"
+      ],
+      "specs": {
+        "Resolution": "1624 x 1228 (2 MP)",
+        "Sensor": "1/1.8\" CMOS",
+        "Pixel size": "4.4 um",
+        "Typical capture time (s)": "0.01 - 0.03",
+        "Dimensions (mm)": "29 x 29 x 42",
+        "Weight (kg)": "0.10"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "MM-2D-M2",
+      "name": "2D M2",
+      "sensor": {
+        "sizeName": "2/3\"",
+        "pixelH": 2448,
+        "pixelV": 2048,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 8.45,
+        "ccdHeightMm": 7.07
+      },
+      "availableLensesMm": [8, 12, 16, 25, 35, 50, 75],
+      "availableAperturesF": [1.8, 2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.020,
+      "overview": [
+        "5 MP, Sony IMX264 class sensor",
+        "Excellent dynamic range",
+        "Quality control and metrology"
+      ],
+      "specs": {
+        "Resolution": "2448 x 2048 (5 MP)",
+        "Sensor": "2/3\" CMOS",
+        "Pixel size": "3.45 um",
+        "Typical capture time (s)": "0.02 - 0.05",
+        "Dimensions (mm)": "29 x 29 x 42",
+        "Weight (kg)": "0.11"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "MM-2D-L1",
+      "name": "2D L1",
+      "sensor": {
+        "sizeName": "1\"",
+        "pixelH": 4096,
+        "pixelV": 3000,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 14.13,
+        "ccdHeightMm": 10.35
+      },
+      "availableLensesMm": [12, 16, 25, 35, 50, 75, 100],
+      "availableAperturesF": [2.0, 2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.025,
+      "overview": [
+        "12 MP high-resolution sensor",
+        "1\" optical format",
+        "High-precision inspection"
+      ],
+      "specs": {
+        "Resolution": "4096 x 3000 (12 MP)",
+        "Sensor": "1\" CMOS",
+        "Pixel size": "3.45 um",
+        "Typical capture time (s)": "0.04 - 0.08",
+        "Dimensions (mm)": "44 x 44 x 63",
+        "Weight (kg)": "0.23"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "MM-2D-XL1",
+      "name": "2D XL1",
+      "sensor": {
+        "sizeName": "APS-C",
+        "pixelH": 6464,
+        "pixelV": 4852,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 22.30,
+        "ccdHeightMm": 16.74
+      },
+      "availableLensesMm": [16, 25, 35, 50, 75, 100, 135],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16, 22],
+      "circleOfConfusionMm": 0.030,
+      "overview": [
+        "31 MP ultra-high-resolution camera",
+        "APS-C optical format",
+        "Wide-field high-detail inspection"
+      ],
+      "specs": {
+        "Resolution": "6464 x 4852 (31 MP)",
+        "Sensor": "APS-C CMOS",
+        "Pixel size": "3.45 um",
+        "Typical capture time (s)": "0.06 - 0.12",
+        "Dimensions (mm)": "62 x 62 x 78",
+        "Weight (kg)": "0.52"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "MM-2D-XXL1",
+      "name": "2D XXL1",
+      "sensor": {
+        "sizeName": "Full Frame",
+        "pixelH": 9344,
+        "pixelV": 7000,
+        "pixelSizeUm": 3.76,
+        "ccdWidthMm": 35.13,
+        "ccdHeightMm": 26.32
+      },
+      "availableLensesMm": [24, 35, 50, 85, 100, 135, 200],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16, 22],
+      "circleOfConfusionMm": 0.030,
+      "overview": [
+        "65 MP full-frame industrial camera",
+        "Maximum field of view and detail",
+        "Large-format scanning and PCB inspection"
+      ],
+      "specs": {
+        "Resolution": "9344 x 7000 (65 MP)",
+        "Sensor": "Full-frame CMOS",
+        "Pixel size": "3.76 um",
+        "Typical capture time (s)": "0.10 - 0.20",
+        "Dimensions (mm)": "74 x 74 x 95",
+        "Weight (kg)": "0.88"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    }
+  ]
+}

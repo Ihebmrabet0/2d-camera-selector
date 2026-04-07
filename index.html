@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mech-Eye Industrial 2D Camera Selector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<!-- ===== NAVBAR ========================================= -->
+<div class="navbar">
+  <div class="navbar-inner">
+    <div class="nav-left">
+      <span class="nav-logo"><img src="./src/img/mech-mind-icon.png" alt="Mech Mind" class="nav-logo-img"></span>
+      <a href="https://community.mech-mind.com/" class="nav-link">Forum</a>
+      <a href="https://docs.mech-mind.net/" class="nav-link">Resources</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-lang">文 | A</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN =========================================== -->
+<div class="main-container">
+  <div class="main-title">2D Camera Selector</div>
+
+  <div class="layout-row">
+
+    <!-- ===== LEFT: Setup inputs ======================== -->
+    <div class="left-col">
+      <div class="col-title">Setup</div>
+      <div class="params-panel">
+
+        <!-- Distance -->
+        <div class="param-header">
+          <span class="circle-label bg-orange">D</span>
+          <span class="param-name orange-text">Distance camera to object (mm)</span>
+        </div>
+        <div class="slider-row mb-20">
+          <input id="distance-slider" type="range" min="100" max="5000" value="1000">
+          <input class="spin-box" id="distance-num" type="number" min="100" max="5000" step="10" value="1000">
+        </div>
+
+        <!-- FOV Width -->
+        <div class="param-header">
+          <span class="circle-label bg-blue">W</span>
+          <span class="param-name blue-text">Desired FOV width (mm)</span>
+        </div>
+        <div class="slider-row mb-20">
+          <input id="fov-slider" type="range" min="10" max="3000" value="500">
+          <input class="spin-box" id="fov-num" type="number" min="10" max="3000" step="10" value="500">
+        </div>
+
+        <!-- Lens -->
+        <div class="field-label">Lens focal length</div>
+        <select id="lens-select" class="full-select"></select>
+
+        <!-- Aperture -->
+        <div class="field-label" style="margin-top:10px;">Aperture (f-number)</div>
+        <select id="aperture-select" class="full-select"></select>
+
+        <!-- Sensor info table -->
+        <table class="sensor-table">
+          <tr><td>Sensor</td>        <td id="st-sensor">—</td></tr>
+          <tr><td>Pixels (H)</td>    <td id="st-pxh">—</td></tr>
+          <tr><td>Pixels (V)</td>    <td id="st-pxv">—</td></tr>
+          <tr><td>Pixel size (µm)</td><td id="st-pxsz">—</td></tr>
+          <tr><td>CCD width (mm)</td> <td id="st-ccdw">—</td></tr>
+          <tr><td>CCD height (mm)</td><td id="st-ccdh">—</td></tr>
+          <tr><td>CCD ratio</td>     <td id="st-ratio">—</td></tr>
+        </table>
+
+      </div>
+    </div><!-- /left-col -->
+
+    <!-- ===== CENTER: Sidebar + FOV ===================== -->
+    <div class="center-col">
+      <div class="col-title">Camera FOV</div>
+
+      <div class="center-inner">
+
+        <!-- Camera sidebar buttons -->
+        <div id="camera-sidebar"></div>
+
+        <!-- FOV panel -->
+        <div class="fov-panel">
+
+          <!-- Results top strip -->
+          <div class="results-top">
+            <div class="res-group">
+              <span class="res-label">Ideal focal length</span>
+              <strong id="out-ideal">—</strong>
+            </div>
+            <div class="res-group">
+              <span class="res-label">Accuracy (desired FOV)</span>
+              <strong id="out-ideal-acc">—</strong>
+            </div>
+            <div class="res-group">
+              <span class="res-label">Actual FOV (W × H)</span>
+              <strong id="out-fov">—</strong>
+            </div>
+            <div class="res-group">
+              <span class="res-label">Accuracy (selected lens)</span>
+              <strong id="out-acc">—</strong>
+            </div>
+          </div>
+
+          <!-- SVG diagram -->
+          <div class="canvas-container">
+            <svg id="fov-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+
+          <!-- DoF results row -->
+          <div class="dof-row">
+            <span class="res-label">DoF near:</span>
+            <strong id="out-dofn">—</strong>
+            <span class="res-label">DoF far:</span>
+            <strong id="out-doff">—</strong>
+            <span class="res-label">Hyperfocal:</span>
+            <strong id="out-hyperfocal">—</strong>
+          </div>
+
+          <div class="disclaimer">
+            This selector provides rough guidance based on a pinhole approximation.
+            Results are for reference only — please consult a sales representative
+            and verify in a feasibility study before final selection.
+          </div>
+
+        </div><!-- /fov-panel -->
+      </div><!-- /center-inner -->
+    </div><!-- /center-col -->
+
+    <!-- ===== RIGHT: Camera information ================= -->
+    <div class="right-col">
+      <div class="col-title">Camera Information</div>
+      <div class="cam-info-panel">
+        <h3>Overview</h3>
+        <ul id="overview-list"></ul>
+        <h3>Specifications</h3>
+        <table id="specs-table" class="spec-table"></table>
+        <a id="datasheet-link" href="#" target="_blank" class="view-specs-link">
+          View all specifications
+        </a>
+      </div>
+    </div><!-- /right-col -->
+
+  </div><!-- /layout-row -->
+</div><!-- /main-container -->
+
+<script src="./data/cameras.js"></script>
+<script src="./js/lens-math.js"></script>
+<script src="./js/fov-render.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
