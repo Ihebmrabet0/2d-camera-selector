@@ -4,7 +4,8 @@ const state = {
   cameras: [],
   cameraId: null,
   distanceMm: 1000,
-  fovWidthMm: 500,
+  objectWidthMm: 300,
+  objectLengthMm: 200,
   lensMm: null,
   fNumber: null
 };
@@ -34,7 +35,8 @@ function init() {
 
   // Wire sliders + number boxes
   wireSlider('distance-slider', 'distance-num', v => { state.distanceMm = v; recompute(); });
-  wireSlider('fov-slider',      'fov-num',      v => { state.fovWidthMm  = v; recompute(); });
+  wireSlider('objw-slider',     'objw-num',     v => { state.objectWidthMm = v; recompute(); });
+  wireSlider('objl-slider',     'objl-num',     v => { state.objectLengthMm = v; recompute(); });
 
   $('lens-select').addEventListener('change', e => {
     state.lensMm = parseFloat(e.target.value);
@@ -44,6 +46,26 @@ function init() {
     state.fNumber = parseFloat(e.target.value);
     recompute();
   });
+
+  $('preset-small').addEventListener('click', () => applyPreset(300, 60, 45));
+  $('preset-medium').addEventListener('click', () => applyPreset(1000, 280, 180));
+  $('preset-large').addEventListener('click', () => applyPreset(1800, 900, 620));
+}
+
+function applyPreset(distanceMm, objectWidthMm, objectLengthMm) {
+  state.distanceMm = distanceMm;
+  state.objectWidthMm = objectWidthMm;
+  state.objectLengthMm = objectLengthMm;
+  $('distance-slider').value = distanceMm;
+  $('distance-num').value = distanceMm;
+  $('objw-slider').value = objectWidthMm;
+  $('objw-num').value = objectWidthMm;
+  $('objl-slider').value = objectLengthMm;
+  $('objl-num').value = objectLengthMm;
+  setFill($('distance-slider'));
+  setFill($('objw-slider'));
+  setFill($('objl-slider'));
+  recompute();
 }
 
 function wireSlider(sliderId, numId, callback) {
@@ -65,10 +87,20 @@ function wireSlider(sliderId, numId, callback) {
 }
 
 // ── Camera viability ─────────────────────────────────────────
-function isViable(camera, distanceMm, fovWidthMm) {
+function targetWidthForCamera(camera) {
+  const objW = Math.max(1, state.objectWidthMm);
+  const objL = Math.max(1, state.objectLengthMm);
+  const aspect = camera.sensor.ccdWidthMm / Math.max(camera.sensor.ccdHeightMm, 0.001);
+
+  // To fit object length in sensor height, the corresponding FOV width must also grow by sensor aspect.
+  const widthNeededForLength = objL * aspect;
+  return Math.max(objW, widthNeededForLength);
+}
+
+function isViable(camera, distanceMm, desiredWidthMm) {
   const minLens = Math.min(...camera.availableLensesMm);
   const maxFov  = distanceMm * camera.sensor.ccdWidthMm / minLens;
-  return maxFov >= fovWidthMm;
+  return maxFov >= desiredWidthMm;
 }
 
 // ── Sidebar ──────────────────────────────────────────────────
@@ -81,22 +113,63 @@ function buildSidebar() {
     btn.id = 'btn-' + c.id;
     btn.innerHTML =
       `<span class="cam-name">${c.name}</span>` +
+      `<span class="fit-tag" id="fit-${c.id}">Not fit</span>` +
       `<span class="status-badge badge-nok" id="badge-${c.id}">✕</span>`;
     btn.addEventListener('click', () => selectCamera(c.id, true));
     sidebar.appendChild(btn);
   }
 }
 
+function cameraFit(camera, distanceMm, desiredWidthMm) {
+  const viable = isViable(camera, distanceMm, desiredWidthMm);
+  const ideal = idealFocalLength(distanceMm, camera.sensor.ccdWidthMm, desiredWidthMm);
+  const bestLens = pickClosestLens(ideal, camera.availableLensesMm);
+  const actual = fovForLens(
+    distanceMm,
+    camera.sensor.ccdWidthMm,
+    camera.sensor.ccdHeightMm,
+    bestLens
+  );
+
+  const requiredHeightMm = desiredWidthMm * camera.sensor.ccdHeightMm / Math.max(camera.sensor.ccdWidthMm, 0.001);
+  const widthError = Math.abs(actual.w - desiredWidthMm) / Math.max(desiredWidthMm, 1);
+  const heightError = Math.abs(actual.h - requiredHeightMm) / Math.max(requiredHeightMm, 1);
+  const coverageError = (widthError + heightError) / 2;
+  const megaPixels = (camera.sensor.pixelH * camera.sensor.pixelV) / 1000000;
+  const resolutionBonus = Math.min(20, megaPixels * 1.4);
+
+  let score = 100 - coverageError * 60 + resolutionBonus;
+  if (!viable) score -= 40;
+  score = Math.max(0, Math.min(130, score));
+
+  if (!viable) return { viable, score, label: 'Not fit', badgeClass: 'badge-nok', badgeText: '✕' };
+  if (score >= 110) return { viable, score, label: 'Best', badgeClass: 'badge-best', badgeText: '1' };
+  if (score >= 95) return { viable, score, label: 'Good', badgeClass: 'badge-good', badgeText: '2' };
+  return { viable, score, label: 'Possible', badgeClass: 'badge-possible', badgeText: '3' };
+}
+
 function refreshSidebar() {
-  for (const c of state.cameras) {
+  const sidebar = $('camera-sidebar');
+  const ranked = state.cameras
+    .map(c => {
+      const desiredWidthMm = targetWidthForCamera(c);
+      return { camera: c, fit: cameraFit(c, state.distanceMm, desiredWidthMm) };
+    })
+    .sort((a, b) => b.fit.score - a.fit.score);
+
+  for (const entry of ranked) {
+    const c = entry.camera;
+    const fit = entry.fit;
     const btn   = $('btn-'   + c.id);
     const badge = $('badge-' + c.id);
+    const fitLabel = $('fit-' + c.id);
     if (!btn) continue;
-    const viable = isViable(c, state.distanceMm, state.fovWidthMm);
-    btn.classList.toggle('viable',   viable);
+    btn.classList.toggle('viable',   fit.viable);
     btn.classList.toggle('selected', c.id === state.cameraId);
-    badge.className = 'status-badge ' + (viable ? 'badge-ok' : 'badge-nok');
-    badge.textContent = viable ? '✓' : '✕';
+    badge.className = 'status-badge ' + fit.badgeClass;
+    badge.textContent = fit.badgeText;
+    fitLabel.textContent = fit.label;
+    sidebar.appendChild(btn);
   }
 }
 
@@ -127,7 +200,8 @@ function selectCamera(id, userClick) {
   }
 
   // Auto-select best lens (closest to ideal)
-  const ideal = idealFocalLength(state.distanceMm, c.sensor.ccdWidthMm, state.fovWidthMm);
+  const desiredWidthMm = targetWidthForCamera(c);
+  const ideal = idealFocalLength(state.distanceMm, c.sensor.ccdWidthMm, desiredWidthMm);
   state.lensMm = pickClosestLens(ideal, c.availableLensesMm);
   lensSel.value = state.lensMm;
 
@@ -182,7 +256,7 @@ function recompute() {
 
   const r = computeAll({
     distanceMm:  state.distanceMm,
-    fovWidthMm:  state.fovWidthMm,
+    fovWidthMm:  targetWidthForCamera(c),
     camera:      c,
     lensMm:      state.lensMm,
     fNumber:     state.fNumber
@@ -193,13 +267,25 @@ function recompute() {
   $('out-fov').textContent      = `${fmt(r.fov.w, 1)} × ${fmt(r.fov.h, 1)} mm`;
   $('out-acc').textContent      = fmt(r.newAccuracy, 4) + ' mm/px';
   $('out-dofn').textContent     = fmt(r.dof.near, 1) + ' mm';
-  $('out-doff').textContent     = fmt(r.dof.far, 1) + ' mm';
+  $('out-doff').textContent     = isFinite(r.dof.far) ? (fmt(r.dof.far, 1) + ' mm') : 'Extends beyond working range';
   $('out-hyperfocal').textContent = fmt(r.dof.hyperfocal, 0) + ' mm';
+
+  const detailMm = r.newAccuracy * 3;
+  const fits = state.objectWidthMm <= r.fov.w && state.objectLengthMm <= r.fov.h;
+  const fitMessage = fits
+    ? `Object (${fmt(state.objectWidthMm, 0)} × ${fmt(state.objectLengthMm, 0)} mm) fits in the visible area.`
+    : `Object (${fmt(state.objectWidthMm, 0)} × ${fmt(state.objectLengthMm, 0)} mm) is larger than the visible area.`;
+  $('out-summary').textContent =
+    `This setup covers ${fmt(r.fov.w, 0)} × ${fmt(r.fov.h, 0)} mm and can typically detect details around ${fmt(detailMm, 2)} mm. ${fitMessage}`;
 
   renderFov($('fov-svg'), {
     distanceMm:  state.distanceMm,
+    distanceMinMm: parseFloat($('distance-slider').min) || 100,
+    distanceMaxMm: parseFloat($('distance-slider').max) || 5000,
     fovWidthMm:  r.fov.w,
     fovHeightMm: r.fov.h,
+    objectWidthMm: state.objectWidthMm,
+    objectLengthMm: state.objectLengthMm,
     dofNear:     r.dof.near,
     dofFar:      r.dof.far
   });

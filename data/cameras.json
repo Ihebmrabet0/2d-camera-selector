@@ -1,176 +1,266 @@
 ﻿{
   "cameras": [
     {
-      "id": "MM-2D-S1",
-      "name": "2D S1",
+      "id": "AIC-Lite-016M-07M-W",
+      "name": "AIC-Lite-016M-07M-W",
       "sensor": {
-        "sizeName": "1/2.5\"",
-        "pixelH": 2592,
-        "pixelV": 1944,
-        "pixelSizeUm": 2.2,
-        "ccdWidthMm": 5.70,
-        "ccdHeightMm": 4.28
-      },
-      "availableLensesMm": [6, 8, 12, 16, 25, 35, 50],
-      "availableAperturesF": [1.8, 2.8, 4.0, 5.6, 8.0, 11, 16],
-      "circleOfConfusionMm": 0.011,
-      "overview": [
-        "Compact 5 MP industrial camera",
-        "Global shutter",
-        "Ideal for inspection of small parts"
-      ],
-      "specs": {
-        "Resolution": "2592 x 1944 (5 MP)",
-        "Sensor": "1/2.5\" CMOS",
-        "Pixel size": "2.2 um",
-        "Typical capture time (s)": "0.02 - 0.04",
-        "Dimensions (mm)": "29 x 29 x 42",
-        "Weight (kg)": "0.09"
-      },
-      "datasheetUrl": "https://docs.mech-mind.net/"
-    },
-    {
-      "id": "MM-2D-M1",
-      "name": "2D M1",
-      "sensor": {
-        "sizeName": "1/1.8\"",
-        "pixelH": 1624,
-        "pixelV": 1228,
-        "pixelSizeUm": 4.4,
-        "ccdWidthMm": 7.15,
-        "ccdHeightMm": 5.44
-      },
-      "availableLensesMm": [6, 8, 8.5, 9, 12, 16, 25, 35, 50, 75],
-      "availableAperturesF": [1.4, 2.0, 2.8, 4.0, 5.6, 8.0, 11, 16],
-      "circleOfConfusionMm": 0.020,
-      "overview": [
-        "2 MP industrial workhorse",
-        "Large 4.4 um pixels for low light",
-        "General purpose machine vision"
-      ],
-      "specs": {
-        "Resolution": "1624 x 1228 (2 MP)",
-        "Sensor": "1/1.8\" CMOS",
-        "Pixel size": "4.4 um",
-        "Typical capture time (s)": "0.01 - 0.03",
-        "Dimensions (mm)": "29 x 29 x 42",
-        "Weight (kg)": "0.10"
-      },
-      "datasheetUrl": "https://docs.mech-mind.net/"
-    },
-    {
-      "id": "MM-2D-M2",
-      "name": "2D M2",
-      "sensor": {
-        "sizeName": "2/3\"",
-        "pixelH": 2448,
-        "pixelV": 2048,
+        "sizeName": "1.6 MP",
+        "pixelH": 1440,
+        "pixelV": 1080,
         "pixelSizeUm": 3.45,
-        "ccdWidthMm": 8.45,
-        "ccdHeightMm": 7.07
+        "ccdWidthMm": 4.97,
+        "ccdHeightMm": 3.73
       },
-      "availableLensesMm": [8, 12, 16, 25, 35, 50, 75],
-      "availableAperturesF": [1.8, 2.8, 4.0, 5.6, 8.0, 11, 16],
-      "circleOfConfusionMm": 0.020,
+      "availableLensesMm": [6.72],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.012,
       "overview": [
-        "5 MP, Sony IMX264 class sensor",
-        "Excellent dynamic range",
-        "Quality control and metrology"
+        "Monochrome, global shutter camera",
+        "Manual focus with 6.72 mm lens",
+        "Best for short working distance setups"
       ],
       "specs": {
-        "Resolution": "2448 x 2048 (5 MP)",
-        "Sensor": "2/3\" CMOS",
-        "Pixel size": "3.45 um",
-        "Typical capture time (s)": "0.02 - 0.05",
-        "Dimensions (mm)": "29 x 29 x 42",
-        "Weight (kg)": "0.11"
+        "Resolution": "1440 x 1080",
+        "Color": "Monochrome",
+        "Focusing method": "Manual focus",
+        "Light color": "White",
+        "Working distance": "40 - 150 mm",
+        "Field of view range": "30 x 22 mm - 111 x 83 mm",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "12 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "6.72 mm"
       },
       "datasheetUrl": "https://docs.mech-mind.net/"
     },
     {
-      "id": "MM-2D-L1",
-      "name": "2D L1",
+      "id": "AIC-Lite-016M-16M-W",
+      "name": "AIC-Lite-016M-16M-W",
       "sensor": {
-        "sizeName": "1\"",
+        "sizeName": "1.6 MP",
+        "pixelH": 1440,
+        "pixelV": 1080,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 4.97,
+        "ccdHeightMm": 3.73
+      },
+      "availableLensesMm": [16],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.012,
+      "overview": [
+        "Monochrome, global shutter camera",
+        "Manual focus with 16 mm lens",
+        "Narrower FOV for small-region inspection"
+      ],
+      "specs": {
+        "Resolution": "1440 x 1080",
+        "Color": "Monochrome",
+        "Focusing method": "Manual focus",
+        "Light color": "White, non-polarized",
+        "Working distance": "80 - 200 mm",
+        "Field of view range": "21 x 16 mm - 58 x 44 mm",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "12 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "16 mm"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "AIC-Lite-050M-08A-W",
+      "name": "AIC-Lite-050M-08A-W",
+      "sensor": {
+        "sizeName": "5 MP",
+        "pixelH": 2400,
+        "pixelV": 2000,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 8.28,
+        "ccdHeightMm": 6.90
+      },
+      "availableLensesMm": [8],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.018,
+      "overview": [
+        "Monochrome, global shutter camera",
+        "Motorized focus with 8 mm lens",
+        "Wide-area viewing at medium to long distance"
+      ],
+      "specs": {
+        "Resolution": "2400 x 2000",
+        "Color": "Monochrome",
+        "Focusing method": "Motorized focus",
+        "Light color": "White, non-polarized",
+        "Working distance": "80 mm - 1500 mm",
+        "Field of view range": "207 x 172 mm (at 200 mm working distance)",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "16 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "8 mm"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "AIC-Lite-050M-16A-W",
+      "name": "AIC-Lite-050M-16A-W",
+      "sensor": {
+        "sizeName": "5 MP",
+        "pixelH": 2400,
+        "pixelV": 2000,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 8.28,
+        "ccdHeightMm": 6.90
+      },
+      "availableLensesMm": [16],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.018,
+      "overview": [
+        "Monochrome, global shutter camera",
+        "Motorized focus with 16 mm lens",
+        "Higher detail for tighter FOV inspections"
+      ],
+      "specs": {
+        "Resolution": "2400 x 2000",
+        "Color": "Monochrome",
+        "Focusing method": "Motorized focus",
+        "Light color": "White, non-polarized",
+        "Working distance": "100 mm - 1500 mm",
+        "Field of view range": "103 x 86 mm (at 200 mm working distance)",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "16 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "16 mm"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "AIC-Lite-050C-08A-W",
+      "name": "AIC-Lite-050C-08A-W",
+      "sensor": {
+        "sizeName": "5 MP",
+        "pixelH": 2400,
+        "pixelV": 2000,
+        "pixelSizeUm": 3.45,
+        "ccdWidthMm": 8.28,
+        "ccdHeightMm": 6.90
+      },
+      "availableLensesMm": [8],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.018,
+      "overview": [
+        "Color, global shutter camera",
+        "Motorized focus with 8 mm lens",
+        "Supports polarized or non-polarized lighting"
+      ],
+      "specs": {
+        "Resolution": "2400 x 2000",
+        "Color": "Color",
+        "Focusing method": "Motorized focus",
+        "Light color": "White, polarized/non-polarized",
+        "Working distance": "80 mm - 1500 mm",
+        "Field of view range": "207 x 172 mm (at 200 mm working distance)",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "12 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "8 mm"
+      },
+      "datasheetUrl": "https://docs.mech-mind.net/"
+    },
+    {
+      "id": "AIC-Lite-120M-00C-N",
+      "name": "AIC-Lite-120M-00C-N",
+      "sensor": {
+        "sizeName": "12 MP",
         "pixelH": 4096,
         "pixelV": 3000,
         "pixelSizeUm": 3.45,
         "ccdWidthMm": 14.13,
         "ccdHeightMm": 10.35
       },
-      "availableLensesMm": [12, 16, 25, 35, 50, 75, 100],
-      "availableAperturesF": [2.0, 2.8, 4.0, 5.6, 8.0, 11, 16],
+      "availableLensesMm": [8, 12, 16, 25, 35, 50],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
       "circleOfConfusionMm": 0.025,
       "overview": [
-        "12 MP high-resolution sensor",
-        "1\" optical format",
-        "High-precision inspection"
+        "Monochrome, global shutter camera",
+        "No onboard light source",
+        "Lens is user-selectable for wide range of applications"
       ],
       "specs": {
-        "Resolution": "4096 x 3000 (12 MP)",
-        "Sensor": "1\" CMOS",
-        "Pixel size": "3.45 um",
-        "Typical capture time (s)": "0.04 - 0.08",
-        "Dimensions (mm)": "44 x 44 x 63",
-        "Weight (kg)": "0.23"
+        "Resolution": "4096 x 3000",
+        "Color": "Monochrome",
+        "Focusing method": "Manual focus",
+        "Light color": "No light source included",
+        "Working distance": "Depends on lens selection",
+        "Field of view range": "Depends on lens selection",
+        "Pixel size": "3.45 um x 3.45 um",
+        "Max frame rate": "9.9 fps (16 fps with lossless compression)",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "User-selectable"
       },
       "datasheetUrl": "https://docs.mech-mind.net/"
     },
     {
-      "id": "MM-2D-XL1",
-      "name": "2D XL1",
+      "id": "AIC-Lite-200M-00C-N",
+      "name": "AIC-Lite-200M-00C-N",
       "sensor": {
-        "sizeName": "APS-C",
-        "pixelH": 6464,
-        "pixelV": 4852,
-        "pixelSizeUm": 3.45,
-        "ccdWidthMm": 22.30,
-        "ccdHeightMm": 16.74
+        "sizeName": "20 MP",
+        "pixelH": 5328,
+        "pixelV": 4608,
+        "pixelSizeUm": 2.74,
+        "ccdWidthMm": 14.60,
+        "ccdHeightMm": 12.63
       },
-      "availableLensesMm": [16, 25, 35, 50, 75, 100, 135],
-      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16, 22],
-      "circleOfConfusionMm": 0.030,
+      "availableLensesMm": [8, 12, 16, 25, 35, 50],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.026,
       "overview": [
-        "31 MP ultra-high-resolution camera",
-        "APS-C optical format",
-        "Wide-field high-detail inspection"
+        "Monochrome, global shutter camera",
+        "No onboard light source",
+        "High resolution for fine-detail inspection"
       ],
       "specs": {
-        "Resolution": "6464 x 4852 (31 MP)",
-        "Sensor": "APS-C CMOS",
-        "Pixel size": "3.45 um",
-        "Typical capture time (s)": "0.06 - 0.12",
-        "Dimensions (mm)": "62 x 62 x 78",
-        "Weight (kg)": "0.52"
+        "Resolution": "5328 x 4608",
+        "Color": "Monochrome",
+        "Focusing method": "Manual focus",
+        "Light color": "No light source included",
+        "Working distance": "Depends on lens selection",
+        "Field of view range": "Depends on lens selection",
+        "Pixel size": "2.74 um x 2.74 um",
+        "Max frame rate": "4.9 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "User-selectable"
       },
       "datasheetUrl": "https://docs.mech-mind.net/"
     },
     {
-      "id": "MM-2D-XXL1",
-      "name": "2D XXL1",
+      "id": "AIC-Lite-250M-00C-N",
+      "name": "AIC-Lite-250M-00C-N",
       "sensor": {
-        "sizeName": "Full Frame",
-        "pixelH": 9344,
-        "pixelV": 7000,
-        "pixelSizeUm": 3.76,
-        "ccdWidthMm": 35.13,
-        "ccdHeightMm": 26.32
+        "sizeName": "25 MP",
+        "pixelH": 5120,
+        "pixelV": 5120,
+        "pixelSizeUm": 2.5,
+        "ccdWidthMm": 12.80,
+        "ccdHeightMm": 12.80
       },
-      "availableLensesMm": [24, 35, 50, 85, 100, 135, 200],
-      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16, 22],
-      "circleOfConfusionMm": 0.030,
+      "availableLensesMm": [8, 12, 16, 25, 35, 50],
+      "availableAperturesF": [2.8, 4.0, 5.6, 8.0, 11, 16],
+      "circleOfConfusionMm": 0.024,
       "overview": [
-        "65 MP full-frame industrial camera",
-        "Maximum field of view and detail",
-        "Large-format scanning and PCB inspection"
+        "Monochrome, global shutter camera",
+        "No onboard light source",
+        "Square 25 MP format for high-density measurements"
       ],
       "specs": {
-        "Resolution": "9344 x 7000 (65 MP)",
-        "Sensor": "Full-frame CMOS",
-        "Pixel size": "3.76 um",
-        "Typical capture time (s)": "0.10 - 0.20",
-        "Dimensions (mm)": "74 x 74 x 95",
-        "Weight (kg)": "0.88"
+        "Resolution": "5120 x 5120",
+        "Color": "Monochrome",
+        "Focusing method": "Manual focus",
+        "Light color": "No light source included",
+        "Working distance": "Depends on lens selection",
+        "Field of view range": "Depends on lens selection",
+        "Pixel size": "2.5 um x 2.5 um",
+        "Max frame rate": "4.5 fps",
+        "Sensor type": "CMOS, global shutter",
+        "Lens focal length": "User-selectable"
       },
       "datasheetUrl": "https://docs.mech-mind.net/"
     }

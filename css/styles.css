@@ -90,16 +90,50 @@ body {
 }
 .bg-orange { background: #e07020; }
 .bg-blue   { background: #1d6fe4; }
+.bg-red    { background: #ef4444; }
+.bg-green  { background: #34b27d; }
 
 .param-name { font-size: 13px; }
 .orange-text { color: #e07020; }
 .blue-text   { color: #1d6fe4; }
+.red-text    { color: #ef4444; }
+.green-text  { color: #34b27d; }
+.compact-header { margin-bottom: 4px; }
+.param-help {
+  font-size: 11px;
+  color: #6b7280;
+  margin: -2px 0 8px 30px;
+  line-height: 1.3;
+}
 
 /* Slider row */
 .slider-row {
   display: flex; align-items: center; gap: 8px;
 }
 .mb-20 { margin-bottom: 20px; }
+.mb-12 { margin-bottom: 12px; }
+
+.preset-row {
+  display: flex;
+  gap: 6px;
+  margin: -4px 0 10px;
+}
+.preset-btn {
+  flex: 1;
+  border: 1px solid #bfc8d8;
+  background: #eef2f8;
+  color: #334155;
+  border-radius: 4px;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.preset-btn:hover {
+  border-color: #7c5cbf;
+  color: #1d6fe4;
+}
 
 input[type="range"] {
   flex: 1;
@@ -191,7 +225,7 @@ input[type="range"]::-moz-range-thumb {
 
 /* Camera sidebar */
 #camera-sidebar {
-  width: 132px;
+  width: 152px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -204,7 +238,7 @@ input[type="range"]::-moz-range-thumb {
 
 .cam-btn {
   position: relative;
-  width: 90%;
+  width: 95%;
   padding: 8px 8px 6px;
   border: none;
   border-radius: 6px;
@@ -225,7 +259,7 @@ input[type="range"]::-moz-range-thumb {
 .cam-btn.selected::after {
   content: '▶';
   position: absolute;
-  right: -16px;
+  right: -10px;
   top: 50%;
   transform: translateY(-50%);
   color: #2b83da;
@@ -240,6 +274,14 @@ input[type="range"]::-moz-range-thumb {
   word-break: break-word;
 }
 
+.fit-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+}
+
 .status-badge {
   width: 22px; height: 22px;
   border-radius: 50%;
@@ -251,6 +293,9 @@ input[type="range"]::-moz-range-thumb {
 }
 .badge-ok  { background: #2dba5f; }
 .badge-nok { background: #e07020; }
+.badge-best { background: #2dba5f; }
+.badge-good { background: #2b83da; }
+.badge-possible { background: #f59e0b; }
 
 /* FOV panel (right of sidebar) */
 .fov-panel {
@@ -287,6 +332,12 @@ input[type="range"]::-moz-range-thumb {
 .res-label { font-size: 12px; color: #55627b; white-space: nowrap; }
 .res-group strong { font-size: 14px; font-weight: 700; color: #22304a; }
 
+.result-summary {
+  font-size: 12px;
+  color: #334155;
+  padding: 2px 2px 8px;
+}
+
 /* Canvas */
 .canvas-container { flex: 1; min-height: 0; }
 #fov-svg { width: 100%; height: 100%; display: block; background: rgba(236, 244, 250, 1); border-radius: 2px; }
@@ -306,7 +357,7 @@ input[type="range"]::-moz-range-thumb {
 .disclaimer {
   font-size: 11px;
   color: #9ca3af;
-  text-align: center;
+  text-align: normal;
   line-height: 1.5;
   margin-top: 6px;
 }
