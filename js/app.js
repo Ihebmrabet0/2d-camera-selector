@@ -6,11 +6,122 @@ const state = {
   distanceMm: 1000,
   objectWidthMm: 300,
   objectLengthMm: 200,
+  objectThicknessMm: 50,
   lensMm: null,
   fNumber: null
 };
 
 const $ = (id) => document.getElementById(id);
+
+function setTooltipIfExists(id, text) {
+  const el = $(id);
+  if (!el) return;
+  el.setAttribute('data-tooltip', text);
+  el.removeAttribute('title');
+}
+
+function setupHoverTooltipSystem() {
+  if (document.getElementById('app-tooltip')) return;
+
+  const tooltip = document.createElement('div');
+  tooltip.id = 'app-tooltip';
+  tooltip.className = 'app-tooltip';
+  document.body.appendChild(tooltip);
+
+  let activeTarget = null;
+
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+    activeTarget = null;
+  }
+
+  function positionTooltip(clientX, clientY) {
+    const pad = 12;
+    const { innerWidth, innerHeight } = window;
+    const box = tooltip.getBoundingClientRect();
+
+    let x = clientX + 14;
+    let y = clientY + 14;
+
+    if (x + box.width > innerWidth - pad) {
+      x = clientX - box.width - 14;
+    }
+    if (y + box.height > innerHeight - pad) {
+      y = clientY - box.height - 14;
+    }
+
+    x = Math.max(pad, Math.min(x, innerWidth - box.width - pad));
+    y = Math.max(pad, Math.min(y, innerHeight - box.height - pad));
+
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+  }
+
+  function showTooltipFor(target, clientX, clientY) {
+    const text = target.getAttribute('data-tooltip');
+    if (!text) {
+      hideTooltip();
+      return;
+    }
+    activeTarget = target;
+    tooltip.textContent = text;
+    tooltip.classList.add('visible');
+    positionTooltip(clientX, clientY);
+  }
+
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) {
+      hideTooltip();
+      return;
+    }
+    showTooltipFor(target, e.clientX, e.clientY);
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!activeTarget) return;
+    positionTooltip(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    if (!activeTarget) return;
+    const related = e.relatedTarget;
+    if (related && activeTarget.contains(related)) return;
+    if (related && related.closest && related.closest('[data-tooltip]') === activeTarget) return;
+    hideTooltip();
+  });
+
+  document.addEventListener('focusin', (e) => {
+    const target = e.target.closest('[data-tooltip]');
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    showTooltipFor(target, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  });
+
+  document.addEventListener('focusout', () => {
+    hideTooltip();
+  });
+}
+
+function setupStaticHoverInfo() {
+  setTooltipIfExists('preset-small', 'Good starting values for small objects at short distance.');
+  setTooltipIfExists('preset-medium', 'Balanced starting values for common assembly tasks.');
+  setTooltipIfExists('preset-large', 'Good starting values for large objects and longer distance.');
+
+  // Keep tooltips only where they add explanation beyond visible labels.
+  setTooltipIfExists('aperture-select', 'Choose between brighter image and larger focus range.');
+  setTooltipIfExists('out-hyperfocal', 'Advanced focus metric; can usually be ignored for quick selection.');
+}
+
+function formatApertureOptionLabel(apertureValue, apertureList) {
+  const sorted = [...apertureList].sort((a, b) => a - b);
+  const idx = sorted.indexOf(apertureValue);
+  const ratio = sorted.length > 1 ? idx / (sorted.length - 1) : 0.5;
+
+  if (ratio <= 0.33) return `Brighter image (f/${apertureValue})`;
+  if (ratio >= 0.67) return `More in focus (f/${apertureValue})`;
+  return `Balanced (f/${apertureValue})`;
+}
 
 // ── Slider fill helper ───────────────────────────────────────
 function setFill(slider) {
@@ -29,6 +140,8 @@ function init() {
     return;
   }
   state.cameras = CAMERAS_DATA.cameras || [];
+  setupHoverTooltipSystem();
+  setupStaticHoverInfo();
 
   buildSidebar();
   if (state.cameras.length) selectCamera(state.cameras[0].id, false);
@@ -37,6 +150,7 @@ function init() {
   wireSlider('distance-slider', 'distance-num', v => { state.distanceMm = v; recompute(); });
   wireSlider('objw-slider',     'objw-num',     v => { state.objectWidthMm = v; recompute(); });
   wireSlider('objl-slider',     'objl-num',     v => { state.objectLengthMm = v; recompute(); });
+  wireSlider('objt-slider',     'objt-num',     v => { state.objectThicknessMm = v; recompute(); });
 
   $('lens-select').addEventListener('change', e => {
     state.lensMm = parseFloat(e.target.value);
@@ -113,7 +227,6 @@ function buildSidebar() {
     btn.id = 'btn-' + c.id;
     btn.innerHTML =
       `<span class="cam-name">${c.name}</span>` +
-      `<span class="fit-tag" id="fit-${c.id}">Not fit</span>` +
       `<span class="status-badge badge-nok" id="badge-${c.id}">✕</span>`;
     btn.addEventListener('click', () => selectCamera(c.id, true));
     sidebar.appendChild(btn);
@@ -122,54 +235,30 @@ function buildSidebar() {
 
 function cameraFit(camera, distanceMm, desiredWidthMm) {
   const viable = isViable(camera, distanceMm, desiredWidthMm);
-  const ideal = idealFocalLength(distanceMm, camera.sensor.ccdWidthMm, desiredWidthMm);
-  const bestLens = pickClosestLens(ideal, camera.availableLensesMm);
-  const actual = fovForLens(
-    distanceMm,
-    camera.sensor.ccdWidthMm,
-    camera.sensor.ccdHeightMm,
-    bestLens
-  );
-
-  const requiredHeightMm = desiredWidthMm * camera.sensor.ccdHeightMm / Math.max(camera.sensor.ccdWidthMm, 0.001);
-  const widthError = Math.abs(actual.w - desiredWidthMm) / Math.max(desiredWidthMm, 1);
-  const heightError = Math.abs(actual.h - requiredHeightMm) / Math.max(requiredHeightMm, 1);
-  const coverageError = (widthError + heightError) / 2;
-  const megaPixels = (camera.sensor.pixelH * camera.sensor.pixelV) / 1000000;
-  const resolutionBonus = Math.min(20, megaPixels * 1.4);
-
-  let score = 100 - coverageError * 60 + resolutionBonus;
-  if (!viable) score -= 40;
-  score = Math.max(0, Math.min(130, score));
-
-  if (!viable) return { viable, score, label: 'Not fit', badgeClass: 'badge-nok', badgeText: '✕' };
-  if (score >= 110) return { viable, score, label: 'Best', badgeClass: 'badge-best', badgeText: '1' };
-  if (score >= 95) return { viable, score, label: 'Good', badgeClass: 'badge-good', badgeText: '2' };
-  return { viable, score, label: 'Possible', badgeClass: 'badge-possible', badgeText: '3' };
+  if (viable) return { viable, label: 'Works for current setup', badgeClass: 'badge-ok', badgeText: '✓' };
+  return { viable, label: 'Field of view is too small', badgeClass: 'badge-nok', badgeText: '✕' };
 }
 
 function refreshSidebar() {
-  const sidebar = $('camera-sidebar');
-  const ranked = state.cameras
-    .map(c => {
-      const desiredWidthMm = targetWidthForCamera(c);
-      return { camera: c, fit: cameraFit(c, state.distanceMm, desiredWidthMm) };
-    })
-    .sort((a, b) => b.fit.score - a.fit.score);
-
-  for (const entry of ranked) {
-    const c = entry.camera;
-    const fit = entry.fit;
+  for (const c of state.cameras) {
+    const desiredWidthMm = targetWidthForCamera(c);
+    const fit = cameraFit(c, state.distanceMm, desiredWidthMm);
+    const minLens = Math.min(...c.availableLensesMm);
+    const maxFovW = state.distanceMm * c.sensor.ccdWidthMm / Math.max(minLens, 0.001);
     const btn   = $('btn-'   + c.id);
     const badge = $('badge-' + c.id);
-    const fitLabel = $('fit-' + c.id);
     if (!btn) continue;
     btn.classList.toggle('viable',   fit.viable);
     btn.classList.toggle('selected', c.id === state.cameraId);
     badge.className = 'status-badge ' + fit.badgeClass;
     badge.textContent = fit.badgeText;
-    fitLabel.textContent = fit.label;
-    sidebar.appendChild(btn);
+    btn.setAttribute('data-tooltip',
+      `${c.name}\n` +
+      `Status: ${fit.label}\n` +
+      `Required FOV width: ${desiredWidthMm.toFixed(1)} mm\n` +
+      `Max FOV width (shortest lens): ${maxFovW.toFixed(1)} mm`
+    );
+    btn.removeAttribute('title');
   }
 }
 
@@ -195,7 +284,8 @@ function selectCamera(id, userClick) {
   apSel.innerHTML = '';
   for (const N of c.availableAperturesF) {
     const o = document.createElement('option');
-    o.value = N; o.textContent = 'f/' + N;
+    o.value = N;
+    o.textContent = formatApertureOptionLabel(N, c.availableAperturesF);
     apSel.appendChild(o);
   }
 
@@ -208,16 +298,6 @@ function selectCamera(id, userClick) {
   // Default aperture = middle of list
   state.fNumber = c.availableAperturesF[Math.floor(c.availableAperturesF.length / 2)];
   apSel.value = state.fNumber;
-
-  // Sensor info table
-  const s = c.sensor;
-  $('st-sensor').textContent = s.sizeName;
-  $('st-pxh').textContent    = s.pixelH;
-  $('st-pxv').textContent    = s.pixelV;
-  $('st-pxsz').textContent   = s.pixelSizeUm;
-  $('st-ccdw').textContent   = s.ccdWidthMm;
-  $('st-ccdh').textContent   = s.ccdHeightMm;
-  $('st-ratio').textContent  = (s.ccdWidthMm / s.ccdHeightMm).toFixed(2);
 
   // Camera info panel (right)
   const ov = $('overview-list');
@@ -270,6 +350,8 @@ function recompute() {
   $('out-doff').textContent     = isFinite(r.dof.far) ? (fmt(r.dof.far, 1) + ' mm') : 'Extends beyond working range';
   $('out-hyperfocal').textContent = fmt(r.dof.hyperfocal, 0) + ' mm';
 
+  setTooltipIfExists('out-hyperfocal', `Advanced: hyperfocal distance is ${fmt(r.dof.hyperfocal, 0)} mm`);
+
   const detailMm = r.newAccuracy * 3;
   const fits = state.objectWidthMm <= r.fov.w && state.objectLengthMm <= r.fov.h;
   const fitMessage = fits
@@ -286,6 +368,7 @@ function recompute() {
     fovHeightMm: r.fov.h,
     objectWidthMm: state.objectWidthMm,
     objectLengthMm: state.objectLengthMm,
+    objectThicknessMm: state.objectThicknessMm,
     dofNear:     r.dof.near,
     dofFar:      r.dof.far
   });

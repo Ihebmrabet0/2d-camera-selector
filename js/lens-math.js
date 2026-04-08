@@ -35,6 +35,7 @@ function fovForLens(distanceMm, sensorWidthMm, sensorHeightMm, focalMm) {
 
 // Hyperfocal distance H = f^2 / (N * c) + f   (all mm; N is f-number, c is CoC in mm)
 function hyperfocal(focalMm, fNumber, cocMm) {
+  if (!(focalMm > 0) || !(fNumber > 0) || !(cocMm > 0)) return NaN;
   return (focalMm * focalMm) / (fNumber * cocMm) + focalMm;
 }
 
@@ -43,12 +44,20 @@ function hyperfocal(focalMm, fNumber, cocMm) {
 function depthOfField(distanceMm, focalMm, fNumber, cocMm) {
   const H = hyperfocal(focalMm, fNumber, cocMm);
   const D = distanceMm;
-  const near = (D * (H - focalMm)) / (H + D - 2 * focalMm);
+  if (!isFinite(H) || !(D > 0)) {
+    return { near: NaN, far: NaN, hyperfocal: H };
+  }
+
+  // Standard thin-lens DoF equations using distances from the lens plane.
+  const nearDen = H + (D - focalMm);
+  const near = (H * D) / nearDen;
+
   let far;
   if (D >= H) {
     far = Infinity;
   } else {
-    far = (D * (H - focalMm)) / (H - D);
+    const farDen = H - (D - focalMm);
+    far = (H * D) / farDen;
   }
   return { near, far, hyperfocal: H };
 }
@@ -60,8 +69,22 @@ function computeAll({ distanceMm, fovWidthMm, camera, lensMm, fNumber }) {
   const idealAccuracy = accuracyMmPerPx(fovWidthMm, s.pixelH);
   const fov = fovForLens(distanceMm, s.ccdWidthMm, s.ccdHeightMm, lensMm);
   const newAccuracy = accuracyMmPerPx(fov.w, s.pixelH);
-  const dof = depthOfField(distanceMm, lensMm, fNumber, camera.circleOfConfusionMm);
-  return { ideal, idealAccuracy, fov, newAccuracy, dof };
+
+  const pixelBasedCocMm = (s.pixelSizeUm > 0) ? (s.pixelSizeUm * 0.001) : NaN;
+  const configuredCocMm = camera.circleOfConfusionMm;
+  let effectiveCocMm = configuredCocMm;
+
+  // Keep DoF conservative for machine-vision use by not exceeding a 1-pixel CoC.
+  if (isFinite(pixelBasedCocMm) && pixelBasedCocMm > 0) {
+    if (isFinite(configuredCocMm) && configuredCocMm > 0) {
+      effectiveCocMm = Math.min(configuredCocMm, pixelBasedCocMm);
+    } else {
+      effectiveCocMm = pixelBasedCocMm;
+    }
+  }
+
+  const dof = depthOfField(distanceMm, lensMm, fNumber, effectiveCocMm);
+  return { ideal, idealAccuracy, fov, newAccuracy, dof, effectiveCocMm };
 }
 
 if (typeof module !== 'undefined') {

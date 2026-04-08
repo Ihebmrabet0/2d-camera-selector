@@ -8,7 +8,7 @@
 function renderFov(svg, {
   distanceMm, distanceMinMm, distanceMaxMm,
   fovWidthMm, fovHeightMm,
-  objectWidthMm, objectLengthMm,
+  objectWidthMm, objectLengthMm, objectThicknessMm = 50,
   dofNear, dofFar
 }) {
   const W = 660, H = 420;
@@ -16,6 +16,8 @@ function renderFov(svg, {
   svg.innerHTML = '';
 
   const ns = 'http://www.w3.org/2000/svg';
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const edgePad = 10;
   const el = (tag, attrs, text) => {
     const e = document.createElementNS(ns, tag);
     for (const k in attrs) e.setAttribute(k, attrs[k]);
@@ -23,6 +25,46 @@ function renderFov(svg, {
     svg.appendChild(e);
     return e;
   };
+
+  function drawEdgeSafeText({
+    x,
+    y,
+    text,
+    fill,
+    fontSize = 11,
+    fontWeight = '400',
+    fontFamily = 'Segoe UI, Arial, sans-serif',
+    preferredAnchor = 'end'
+  }) {
+    const t = el('text', {
+      x,
+      y,
+      'text-anchor': preferredAnchor,
+      fill,
+      'font-size': fontSize,
+      'font-weight': fontWeight,
+      'font-family': fontFamily
+    }, text);
+
+    let box = t.getBBox();
+    if (box.x < edgePad) {
+      t.setAttribute('text-anchor', 'start');
+      t.setAttribute('x', String(edgePad));
+      box = t.getBBox();
+    }
+    if (box.x + box.width > (W - edgePad)) {
+      t.setAttribute('text-anchor', 'end');
+      t.setAttribute('x', String(W - edgePad));
+      box = t.getBBox();
+    }
+
+    return {
+      left: box.x,
+      right: box.x + box.width,
+      anchor: t.getAttribute('text-anchor') || preferredAnchor,
+      x: parseFloat(t.getAttribute('x') || String(x))
+    };
+  }
 
   const outerPad = 28;
   const viewGap = 52;
@@ -44,25 +86,47 @@ function renderFov(svg, {
   const dMin = distanceMinMm ?? 100;
   const dMax = distanceMaxMm ?? 5000;
 
+  const focusDistanceMm = Math.max(dMin, Math.min(dMax, distanceMm));
+  const nearDistMm = (dofNear && isFinite(dofNear))
+    ? Math.max(dMin, Math.min(dMax, dofNear))
+    : focusDistanceMm;
+  const farDistForGeometryMm = (dofFar && isFinite(dofFar))
+    ? Math.max(nearDistMm + 1, Math.min(dMax, dofFar))
+    : Math.max(nearDistMm + 1, Math.min(dMax, focusDistanceMm * 2.6));
+
+  // Use a local distance window so focus and DoF planes remain visually distinct.
+  const sceneMinDistMm = Math.max(dMin, nearDistMm * 0.9);
+  const sceneMaxDistMm = Math.min(dMax, Math.max(farDistForGeometryMm, focusDistanceMm) * 1.08);
+  const sceneSpanMm = Math.max(1, sceneMaxDistMm - sceneMinDistMm);
+
   function yForDistance(d) {
-    const t = Math.max(0, Math.min(1, (d - dMin) / Math.max(1, dMax - dMin)));
+    const clamped = Math.max(sceneMinDistMm, Math.min(sceneMaxDistMm, d));
+    const t = Math.max(0, Math.min(1, (clamped - sceneMinDistMm) / sceneSpanMm));
     return workTopY + t * (workBottomY - workTopY);
   }
 
-  function halfAt(y, topHalf, bottomHalf) {
-    const t = Math.max(0, Math.min(1, (y - workTopY) / Math.max(1, workBottomY - workTopY)));
-    return topHalf + t * (bottomHalf - topHalf);
-  }
-
   function drawView(cx, baseHalf, mmLabel, objectMm, fovMm, sideView) {
-    const topHalf = baseHalf * 0.62;
-    const bottomHalf = baseHalf;
-    const objY = yForDistance(distanceMm);
+    const localFocusDistMm = Math.max(1, focusDistanceMm);
+    const lensY = camY + camH + 2;
 
-    const dofNearDist = (dofNear && isFinite(dofNear)) ? dofNear : distanceMm;
-    const dofFarDist = (dofFar && isFinite(dofFar)) ? dofFar : dMax;
+    const dofNearDist = nearDistMm;
+    const dofFarDist = farDistForGeometryMm;
     const trapTopY = Math.max(workTopY, Math.min(workBottomY - 40, yForDistance(dofNearDist)));
     const trapBottomY = Math.min(workBottomY, Math.max(trapTopY + 40, yForDistance(dofFarDist)));
+    const focusY = Math.max(trapTopY + 4, Math.min(trapBottomY - 4, yForDistance(focusDistanceMm)));
+
+    const fovAtDistance = (distanceVal) => {
+      return (mmLabel * Math.max(distanceVal, 1)) / localFocusDistMm;
+    };
+
+    const nearFovMm = fovAtDistance(dofNearDist);
+    const farFovMm = fovAtDistance(dofFarDist);
+    const maxFovMmInView = Math.max(nearFovMm, farFovMm, mmLabel, 1);
+    const pxPerMm = (maxHalf * 2) / maxFovMmInView;
+
+    const topHalf = Math.max(8, (nearFovMm * pxPerMm) / 2);
+    const bottomHalf = Math.max(topHalf + 2, (farFovMm * pxPerMm) / 2);
+    const focusHalf = Math.max(topHalf + 1, (mmLabel * pxPerMm) / 2);
 
     function halfAtLocal(y) {
       const t = Math.max(0, Math.min(1, (y - trapTopY) / Math.max(1, trapBottomY - trapTopY)));
@@ -74,6 +138,38 @@ function renderFov(svg, {
       fill: '#dbeafe',
       stroke: '#3b82f6',
       'stroke-width': 1.5
+    });
+
+    // Rays from the camera toward the field ensure trapezoid side direction is camera-consistent.
+    el('line', {
+      x1: cx,
+      y1: lensY,
+      x2: cx - bottomHalf,
+      y2: trapBottomY,
+      stroke: '#3b82f6',
+      'stroke-width': 1.1,
+      opacity: 0.35
+    });
+    el('line', {
+      x1: cx,
+      y1: lensY,
+      x2: cx + bottomHalf,
+      y2: trapBottomY,
+      stroke: '#3b82f6',
+      'stroke-width': 1.1,
+      opacity: 0.35
+    });
+
+    // Focus plane (the configured camera-to-object distance).
+    el('line', {
+      x1: cx - focusHalf,
+      y1: focusY,
+      x2: cx + focusHalf,
+      y2: focusY,
+      stroke: '#1f2937',
+      'stroke-width': 1,
+      opacity: 0.35,
+      'stroke-dasharray': '5 4'
     });
 
     el('line', {
@@ -169,12 +265,15 @@ function renderFov(svg, {
     }
 
     const objectRatio = Math.max(0, objectMm / Math.max(fovMm, 1));
-    const objTopY = objY - 22;
-    const objBottomY = objY + 2;
+    const halfThicknessMm = Math.max(0, objectThicknessMm) / 2;
+    const objNearY = yForDistance(focusDistanceMm - halfThicknessMm);
+    const objFarY = yForDistance(focusDistanceMm + halfThicknessMm);
+    const objTopY = Math.min(objNearY, objFarY);
+    const objBottomY = Math.max(objNearY, objFarY);
     const objHalfAtTop = halfAtLocal(Math.max(trapTopY, Math.min(trapBottomY, objTopY)));
     const objHalfAtBottom = halfAtLocal(Math.max(trapTopY, Math.min(trapBottomY, objBottomY)));
     const minHalfAcrossObject = Math.min(objHalfAtTop, objHalfAtBottom);
-    const objWidth = Math.max(18, minHalfAcrossObject * 2 * objectRatio);
+    const objWidth = Math.max(6, minHalfAcrossObject * 2 * objectRatio);
     const objectHalfPx = objWidth / 2;
     const fitsHorizontally = objectHalfPx < (minHalfAcrossObject - 0.5);
     const fitsVertically = objTopY >= trapTopY && objBottomY <= trapBottomY;
@@ -184,12 +283,12 @@ function renderFov(svg, {
       x: cx - objWidth / 2,
       y: objTopY,
       width: objWidth,
-      height: 24,
+      height: Math.max(2, objBottomY - objTopY),
       fill: objColor,
       opacity: 0.82,
       stroke: fitsInView ? '#2f8a67' : '#d14343',
       'stroke-width': 0.8,
-      rx: 2
+      rx: 0
     });
 
     function drawHorizontalDimension(xL, xR, y, label, anchorY) {
@@ -210,52 +309,62 @@ function renderFov(svg, {
     }
 
     const topDimY = trapTopY - 14;
-    const topLabelMm = mmLabel * (topHalf / Math.max(bottomHalf, 1));
-    drawHorizontalDimension(cx - topHalf, cx + topHalf, topDimY, topLabelMm, trapTopY);
+    drawHorizontalDimension(cx - topHalf, cx + topHalf, topDimY, nearFovMm, trapTopY);
 
     const dimY = trapBottomY + 30;
-    drawHorizontalDimension(cx - bottomHalf, cx + bottomHalf, dimY, mmLabel, trapBottomY + 1);
+    drawHorizontalDimension(cx - bottomHalf, cx + bottomHalf, dimY, farFovMm, trapBottomY + 1);
+
+    // Additional reference: actual FOV width at focus distance (camera-to-object setting).
+    const focusDimY = Math.min(trapBottomY - 10, focusY + 22);
+    drawHorizontalDimension(cx - focusHalf, cx + focusHalf, focusDimY, mmLabel, focusY);
 
     if (!sideView) {
       const nearY = trapTopY;
       const farY = trapBottomY;
       const nearLabelX = cx - halfAtLocal(nearY) - 8;
+      const leftLabelLaneX = cx - bottomHalf - 34;
+      const nearTextY = Math.max(12, nearY - 8);
+      const nearText = drawEdgeSafeText({
+        x: leftLabelLaneX,
+        y: nearTextY,
+        text: `Sharp from ${Math.round(dofNearDist)} mm`,
+        fill: '#92400e',
+        preferredAnchor: 'end'
+      });
+      const nearLineEndX = nearLabelX > nearText.right
+        ? clamp(nearText.right + 4, edgePad, W - edgePad)
+        : clamp(nearText.left - 4, edgePad, W - edgePad);
       el('line', {
         x1: nearLabelX,
         y1: nearY,
-        x2: nearLabelX - 18,
+        x2: nearLineEndX,
         y2: nearY,
         stroke: '#d97706',
         'stroke-dasharray': '3 2',
         'stroke-width': 1
       });
-      el('text', {
-        x: nearLabelX - 22,
-        y: nearY + 4,
-        'text-anchor': 'end',
-        fill: '#92400e',
-        'font-size': 11,
-        'font-family': 'Segoe UI, Arial, sans-serif'
-      }, `DoFn ${Math.round(dofNearDist)} mm`);
 
       const farLabelX = cx - halfAtLocal(farY) - 8;
+      const farTextY = Math.min(H - 10, farY + 14);
+      const farText = drawEdgeSafeText({
+        x: leftLabelLaneX,
+        y: farTextY,
+        text: `Sharp to ${isFinite(dofFarDist) ? Math.round(dofFarDist) : 'inf'} mm`,
+        fill: '#92400e',
+        preferredAnchor: 'end'
+      });
+      const farLineEndX = farLabelX > farText.right
+        ? clamp(farText.right + 4, edgePad, W - edgePad)
+        : clamp(farText.left - 4, edgePad, W - edgePad);
       el('line', {
         x1: farLabelX,
         y1: farY,
-        x2: farLabelX - 18,
+        x2: farLineEndX,
         y2: farY,
         stroke: '#d97706',
         'stroke-dasharray': '3 2',
         'stroke-width': 1
       });
-      el('text', {
-        x: farLabelX - 22,
-        y: farY + 4,
-        'text-anchor': 'end',
-        fill: '#92400e',
-        'font-size': 11,
-        'font-family': 'Segoe UI, Arial, sans-serif'
-      }, `DoFf ${isFinite(dofFarDist) ? Math.round(dofFarDist) : 'inf'} mm`);
     }
   }
 
@@ -263,22 +372,23 @@ function renderFov(svg, {
   drawView(rightCx, baseHalfH, (fovHeightMm || 0), objectLengthMm || 0, (fovHeightMm || 1), true);
 
   const rightBottomHalf = baseHalfH;
-  const dArrowX = rightCx + rightBottomHalf + 30;
-  const objYForDistance = yForDistance(distanceMm);
-  const objTopYForDistance = objYForDistance - 22;
+  const dArrowX = clamp(rightCx + rightBottomHalf + 30, edgePad + 4, W - edgePad - 4);
+  const focusYForDistance = yForDistance(focusDistanceMm);
   const distStartY = camY + camH + 3;
-  const distEndY = objTopYForDistance;
+  const distEndY = focusYForDistance;
   const distTopY = Math.min(distStartY, distEndY);
   const distBottomY = Math.max(distStartY, distEndY);
   el('line', { x1: dArrowX, y1: distTopY, x2: dArrowX, y2: distBottomY, stroke: '#374151', 'stroke-width': 1.3 });
   el('line', { x1: dArrowX - 5, y1: distTopY, x2: dArrowX + 5, y2: distTopY, stroke: '#374151', 'stroke-width': 1.3 });
   el('line', { x1: dArrowX - 5, y1: distBottomY, x2: dArrowX + 5, y2: distBottomY, stroke: '#374151', 'stroke-width': 1.3 });
-  const distLabelX = dArrowX + 9;
+  const distLabelRawX = dArrowX + 9;
+  const distLabelOnRight = distLabelRawX <= (W - edgePad);
+  const distLabelX = distLabelOnRight ? distLabelRawX : (dArrowX - 9);
   const distLabelY = (distTopY + distBottomY) / 2 + 4;
   el('text', {
     x: distLabelX,
     y: distLabelY,
-    'text-anchor': 'start',
+    'text-anchor': distLabelOnRight ? 'start' : 'end',
     fill: '#374151',
     'font-size': 12,
     'font-weight': '600',
