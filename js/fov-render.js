@@ -75,13 +75,10 @@ function renderFov(svg, {
   const camY = 44;
   const camW = 84;
   const camH = 24;
-  const workTopY = 188;
-  const workBottomY = 320;
+  const lensY = camY + camH + 2;
+  const depthBottomY = 320;
 
-  const minHalf = 26;
   const maxHalf = viewWidth * 0.38;
-  const baseHalfW = Math.max(minHalf, Math.min(maxHalf, fovWidthMm * 0.105));
-  const baseHalfH = Math.max(minHalf, Math.min(maxHalf, (fovHeightMm || fovWidthMm) * 0.14));
 
   const dMin = distanceMinMm ?? 100;
   const dMax = distanceMaxMm ?? 5000;
@@ -94,26 +91,45 @@ function renderFov(svg, {
     ? Math.max(nearDistMm + 1, Math.min(dMax, dofFar))
     : Math.max(nearDistMm + 1, Math.min(dMax, focusDistanceMm * 2.6));
 
-  // Use a local distance window so focus and DoF planes remain visually distinct.
-  const sceneMinDistMm = Math.max(dMin, nearDistMm * 0.9);
-  const sceneMaxDistMm = Math.min(dMax, Math.max(farDistForGeometryMm, focusDistanceMm) * 1.08);
-  const sceneSpanMm = Math.max(1, sceneMaxDistMm - sceneMinDistMm);
+  const fovAtDistanceMm = (fovAtFocusMm, distanceValMm) => {
+    return (Math.max(0, fovAtFocusMm) * Math.max(distanceValMm, 0)) / Math.max(1, focusDistanceMm);
+  };
+  const maxLeftFovMm = Math.max(
+    fovAtDistanceMm(fovWidthMm || 0, nearDistMm),
+    fovAtDistanceMm(fovWidthMm || 0, focusDistanceMm),
+    fovAtDistanceMm(fovWidthMm || 0, farDistForGeometryMm),
+    1
+  );
+  const maxRightFovMm = Math.max(
+    fovAtDistanceMm(fovHeightMm || 0, nearDistMm),
+    fovAtDistanceMm(fovHeightMm || 0, focusDistanceMm),
+    fovAtDistanceMm(fovHeightMm || 0, farDistForGeometryMm),
+    1
+  );
+
+  // Keep x/y proportional: one mm-to-px scale shared by width and depth.
+  const widthScaleLimit = Math.min((maxHalf * 2) / maxLeftFovMm, (maxHalf * 2) / maxRightFovMm);
+  const depthPaddingRatio = 1.03;
+  const maxDepthForScaleMm = Math.max(1, farDistForGeometryMm, focusDistanceMm, nearDistMm);
+  const depthScaleLimit = Math.max(1, (depthBottomY - lensY)) / (maxDepthForScaleMm * depthPaddingRatio);
+  const mmToPx = Math.max(0.001, Math.min(depthScaleLimit, widthScaleLimit));
+  const maxDrawableDepthMm = Math.max(1, (depthBottomY - lensY) / mmToPx);
 
   function yForDistance(d) {
-    const clamped = Math.max(sceneMinDistMm, Math.min(sceneMaxDistMm, d));
-    const t = Math.max(0, Math.min(1, (clamped - sceneMinDistMm) / sceneSpanMm));
-    return workTopY + t * (workBottomY - workTopY);
+    const clamped = Math.max(0, Math.min(maxDrawableDepthMm, d));
+    return lensY + clamped * mmToPx;
   }
 
-  function drawView(cx, baseHalf, mmLabel, objectMm, fovMm, sideView) {
+  function drawView(cx, mmLabel, objectMm, fovMm, sideView) {
     const localFocusDistMm = Math.max(1, focusDistanceMm);
-    const lensY = camY + camH + 2;
 
     const dofNearDist = nearDistMm;
     const dofFarDist = farDistForGeometryMm;
-    const trapTopY = Math.max(workTopY, Math.min(workBottomY - 40, yForDistance(dofNearDist)));
-    const trapBottomY = Math.min(workBottomY, Math.max(trapTopY + 40, yForDistance(dofFarDist)));
-    const focusY = Math.max(trapTopY + 4, Math.min(trapBottomY - 4, yForDistance(focusDistanceMm)));
+    const trapTopY = yForDistance(dofNearDist);
+    const trapBottomRawY = yForDistance(dofFarDist);
+    const trapBottomY = Math.min(depthBottomY, Math.max(trapTopY + 4, trapBottomRawY));
+    const focusYRaw = yForDistance(focusDistanceMm);
+    const focusY = Math.max(trapTopY + 2, Math.min(trapBottomY - 2, focusYRaw));
 
     const fovAtDistance = (distanceVal) => {
       return (mmLabel * Math.max(distanceVal, 1)) / localFocusDistMm;
@@ -121,12 +137,9 @@ function renderFov(svg, {
 
     const nearFovMm = fovAtDistance(dofNearDist);
     const farFovMm = fovAtDistance(dofFarDist);
-    const maxFovMmInView = Math.max(nearFovMm, farFovMm, mmLabel, 1);
-    const pxPerMm = (maxHalf * 2) / maxFovMmInView;
-
-    const topHalf = Math.max(8, (nearFovMm * pxPerMm) / 2);
-    const bottomHalf = Math.max(topHalf + 2, (farFovMm * pxPerMm) / 2);
-    const focusHalf = Math.max(topHalf + 1, (mmLabel * pxPerMm) / 2);
+    const topHalf = Math.max(1, (nearFovMm * mmToPx) / 2);
+    const bottomHalf = Math.max(topHalf + 0.5, (farFovMm * mmToPx) / 2);
+    const focusHalf = Math.max(1, (mmLabel * mmToPx) / 2);
 
     function halfAtLocal(y) {
       const t = Math.max(0, Math.min(1, (y - trapTopY) / Math.max(1, trapBottomY - trapTopY)));
@@ -291,12 +304,17 @@ function renderFov(svg, {
       rx: 0
     });
 
-    function drawHorizontalDimension(xL, xR, y, label, anchorY) {
+    function drawHorizontalDimension(xL, xR, y, label, anchorY, inverse = false) {
       el('line', { x1: xL, y1: y, x2: xR, y2: y, stroke: '#374151', 'stroke-width': 1.3 });
       el('line', { x1: xL, y1: y - 5, x2: xL, y2: y + 5, stroke: '#374151', 'stroke-width': 1.3 });
       el('line', { x1: xR, y1: y - 5, x2: xR, y2: y + 5, stroke: '#374151', 'stroke-width': 1.3 });
+      if (inverse) {
+        el('line', { x1: xL, y1: anchorY, x2: xL, y2: y + 8, stroke: '#a3a3a3', 'stroke-width': 1 });
+        el('line', { x1: xR, y1: anchorY, x2: xR, y2: y + 8, stroke: '#a3a3a3', 'stroke-width': 1 });
+      } else {
       el('line', { x1: xL, y1: anchorY, x2: xL, y2: y - 8, stroke: '#a3a3a3', 'stroke-width': 1 });
       el('line', { x1: xR, y1: anchorY, x2: xR, y2: y - 8, stroke: '#a3a3a3', 'stroke-width': 1 });
+      }
       el('text', {
         x: (xL + xR) / 2,
         y: y - 8,
@@ -308,8 +326,8 @@ function renderFov(svg, {
       }, `${Math.round(label)} mm`);
     }
 
-    const topDimY = trapTopY - 14;
-    drawHorizontalDimension(cx - topHalf, cx + topHalf, topDimY, nearFovMm, trapTopY);
+    const topDimY = trapTopY - 24;
+    drawHorizontalDimension(cx - topHalf, cx + topHalf, topDimY, nearFovMm, trapTopY, true);
 
     const dimY = trapBottomY + 30;
     drawHorizontalDimension(cx - bottomHalf, cx + bottomHalf, dimY, farFovMm, trapBottomY + 1);
@@ -368,13 +386,14 @@ function renderFov(svg, {
     }
   }
 
-  drawView(leftCx, baseHalfW, fovWidthMm, objectWidthMm || 0, fovWidthMm, false);
-  drawView(rightCx, baseHalfH, (fovHeightMm || 0), objectLengthMm || 0, (fovHeightMm || 1), true);
+  drawView(leftCx, fovWidthMm, objectWidthMm || 0, fovWidthMm, false);
+  drawView(rightCx, (fovHeightMm || 0), objectLengthMm || 0, (fovHeightMm || 1), true);
 
-  const rightBottomHalf = baseHalfH;
+  const rightFarFovMm = ((fovHeightMm || 0) * Math.max(farDistForGeometryMm, 1)) / Math.max(1, focusDistanceMm);
+  const rightBottomHalf = Math.max(1, (rightFarFovMm * mmToPx) / 2);
   const dArrowX = clamp(rightCx + rightBottomHalf + 30, edgePad + 4, W - edgePad - 4);
   const focusYForDistance = yForDistance(focusDistanceMm);
-  const distStartY = camY + camH + 3;
+  const distStartY = lensY;
   const distEndY = focusYForDistance;
   const distTopY = Math.min(distStartY, distEndY);
   const distBottomY = Math.max(distStartY, distEndY);
