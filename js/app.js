@@ -7,6 +7,7 @@ const state = {
   objectWidthMm: 300,
   objectLengthMm: 200,
   objectThicknessMm: 50,
+  selectedLensByCameraId: {},
   lensMm: null,
   fNumber: null
 };
@@ -154,6 +155,9 @@ function init() {
 
   $('lens-select').addEventListener('change', e => {
     state.lensMm = parseFloat(e.target.value);
+    if (state.cameraId) {
+      state.selectedLensByCameraId[state.cameraId] = state.lensMm;
+    }
     recompute();
   });
   $('aperture-select').addEventListener('change', e => {
@@ -292,8 +296,11 @@ function selectCamera(id, userClick) {
   // Auto-select best lens (closest to ideal)
   const desiredWidthMm = targetWidthForCamera(c);
   const ideal = idealFocalLength(state.distanceMm, c.sensor.ccdWidthMm, desiredWidthMm);
-  state.lensMm = pickClosestLens(ideal, c.availableLensesMm);
-  lensSel.value = state.lensMm;
+  const savedLens = state.selectedLensByCameraId[c.id];
+  const hasSavedLens = savedLens != null && c.availableLensesMm.some(f => Number(f) === Number(savedLens));
+  state.lensMm = hasSavedLens ? Number(savedLens) : pickClosestLens(ideal, c.availableLensesMm);
+  state.selectedLensByCameraId[c.id] = state.lensMm;
+  lensSel.value = String(state.lensMm);
 
   // Default aperture = middle of list
   state.fNumber = c.availableAperturesF[Math.floor(c.availableAperturesF.length / 2)];
