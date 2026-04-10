@@ -286,7 +286,8 @@ function renderFov(svg, {
     const objHalfAtTop = halfAtLocal(Math.max(trapTopY, Math.min(trapBottomY, objTopY)));
     const objHalfAtBottom = halfAtLocal(Math.max(trapTopY, Math.min(trapBottomY, objBottomY)));
     const minHalfAcrossObject = Math.min(objHalfAtTop, objHalfAtBottom);
-    const objWidth = Math.max(6, minHalfAcrossObject * 2 * objectRatio);
+    const objHalfAtFocus = halfAtLocal(Math.max(trapTopY, Math.min(trapBottomY, focusY)));
+    const objWidth = Math.max(6, objHalfAtFocus * 2 * objectRatio);
     const objectHalfPx = objWidth / 2;
     const fitsHorizontally = objectHalfPx < (minHalfAcrossObject - 0.5);
     const fitsVertically = objTopY >= trapTopY && objBottomY <= trapBottomY;
